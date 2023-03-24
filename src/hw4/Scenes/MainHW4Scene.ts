@@ -87,15 +87,19 @@ export default class MainHW4Scene extends HW4Scene {
 
         // Load the tilemap
         //this.load.tilemap("level", "hw4_assets/tilemaps/HW4Tilemap.json");
-        this.load.tilemap("level", "hw4_assets/tilemaps/customTilemap.json");
+        this.load.tilemap("level", "hw4_assets/tilemaps/64b64.json");
 
         // Load the enemy locations
-        this.load.object("red", "hw4_assets/data/enemies/red.json");
-        this.load.object("blue", "hw4_assets/data/enemies/blue.json");
+        //this.load.object("red", "hw4_assets/data/enemies/red.json");
+        //this.load.object("blue", "hw4_assets/data/enemies/blue.json");
+        this.load.object("red", "hw4_assets/data/enemies/Cust_red.json");
+        this.load.object("blue", "hw4_assets/data/enemies/Cust_blue.json");
 
         // Load the healthpack and lasergun loactions
-        this.load.object("healthpacks", "hw4_assets/data/items/healthpacks.json");
-        this.load.object("laserguns", "hw4_assets/data/items/laserguns.json");
+        //this.load.object("healthpacks", "hw4_assets/data/items/healthpacks.json");
+        //this.load.object("laserguns", "hw4_assets/data/items/laserguns.json");
+        this.load.object("healthpacks", "hw4_assets/data/items/Cust_healthpacks.json");
+        this.load.object("laserguns", "hw4_assets/data/items/Cust_laserguns.json");
 
         // Load the healthpack, inventory slot, and laser gun sprites
         this.load.image("healthpack", "hw4_assets/sprites/healthpack.png");
