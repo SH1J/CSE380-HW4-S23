@@ -318,7 +318,8 @@ export default class GuardDemoScene extends HW4Scene {
         navmesh.registerStrategy("direct", new DirectStrategy(navmesh));
         navmesh.registerStrategy("astar", new AstarStrategy(navmesh));
         // Select A* as our navigation strategy
-        navmesh.setStrategy("astar");
+        navmesh.setStrategy("direct");
+        //navmesh.setStrategy("astar"); // TypeError: Stack full
 
         // Add this navmesh to the navigation manager
         this.navManager.addNavigableEntity("navmesh", navmesh);

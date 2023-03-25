@@ -158,7 +158,6 @@ export default class AstarStrategy extends NavPathStrat {
         let mg = this.mesh.graph;
         
         let nodePosition = mg.getNodePosition(nodeID);
-        let parentPosition = mg.getNodePosition(parentNode.node);
         let endPosition = mg.getNodePosition(goal);
 
         let xDistEnd = Math.abs(endPosition.x - nodePosition.x);

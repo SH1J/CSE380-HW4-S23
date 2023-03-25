@@ -14,6 +14,7 @@ import Item from "../../../GameSystems/ItemSystem/Item";
 import { HasItem } from "../NPCStatuses/HasItem";
 import FalseStatus from "../NPCStatuses/FalseStatus";
 import Battler from "../../../GameSystems/BattleSystem/Battler";
+import { TargetableEntity } from "../../../GameSystems/Targeting/TargetableEntity";
 
 
 /**
@@ -28,34 +29,13 @@ export default class HealerBehavior extends NPCBehavior  {
     /** Initialize the NPC AI */
     public initializeAI(owner: NPCActor, opts: Record<string, any>): void {
         super.initializeAI(owner, opts);
-
-        let scene = owner.getScene();
-
-        /* ######### Add all healer statuses ######## */
-
-        this.addStatus(HealerStatuses.GOAL, new FalseStatus());
-
-        // Check if a healthpack exists in the scene and it's visible
-        this.addStatus(HealerStatuses.HPACK_EXISTS, new TargetExists(scene.getHealthpacks(), new BasicFinder<Item>(null, ItemFilter(Healthpack), VisibleItemFilter())));
-
-        // Check if a healthpack exists in the actors inventory
-        this.addStatus(HealerStatuses.HAS_HPACK, new HasItem(owner, new BasicFinder<Item>(null, ItemFilter(Healthpack))));
-
-        // Check if a lowhealth ally exists in the scene
-        let lowhealthAlly = new BasicFinder<Battler>(null, BattlerActiveFilter(), BattlerGroupFilter([owner.battleGroup]));
-        this.addStatus(HealerStatuses.ALLY_EXISTS, new TargetExists(scene.getBattlers(), lowhealthAlly));
-        
-        /* ######### Add all healer actions ######## */
-
         // TODO configure the rest of the healer actions
-
-        // Idle action
-        let idle = new Idle(this, this.owner);
-        idle.addEffect(HealerStatuses.GOAL);
-        idle.cost = 100;
-        this.addState(HealerActions.IDLE, idle);
-
         /* ######### Set the healers goal ######## */
+
+        // sets statuses
+        this.initializeStatuses();
+        // sets actions
+        this.initalizeActions();
 
         this.goal = HealerStatuses.GOAL;
         this.initialize();
@@ -74,7 +54,57 @@ export default class HealerBehavior extends NPCBehavior  {
         super.update(deltaT);
     }
 
+    /* ######### Add all healer statuses ######## */
+    protected initializeStatuses(): void {
+
+        let scene = this.owner.getScene();
+
+        // Check if a lowhealth ally exists in the scene
+        //let lowhealthAlly = new BasicFinder<Battler>(null, BattlerActiveFilter(), BattlerGroupFilter([this.owner.battleGroup]));
+        let lowhealthAlly = new BasicFinder<Battler>(null, BattlerHealthFilter(0, this.owner.maxHealth/2), BattlerGroupFilter([this.owner.battleGroup]));
+        this.addStatus(HealerStatuses.ALLY_EXISTS, new TargetExists(scene.getBattlers(), lowhealthAlly));
+
+        // Check if a healthpack exists in the scene and it's visible
+        this.addStatus(HealerStatuses.HPACK_EXISTS, new TargetExists(scene.getHealthpacks(), new BasicFinder<Item>(null, ItemFilter(Healthpack), VisibleItemFilter())));
+
+        // Check if a healthpack exists in the actors inventory
+        this.addStatus(HealerStatuses.HAS_HPACK, new HasItem(this.owner, new BasicFinder<Item>(null, ItemFilter(Healthpack))));
+
+        // Add the goal status 
+        this.addStatus(HealerStatuses.GOAL, new FalseStatus());
+    }
+
+    /* ######### Add all healer actions ######## */
+    protected initalizeActions(): void {
+        let scene = this.owner.getScene();
+        
+        // State 1
+        let pickHealthPack = new PickupItem(this, this.owner);
+        pickHealthPack.targets = scene.getHealthpacks();
+        pickHealthPack.targetFinder = new BasicFinder<Item>(ClosestPositioned(this.owner), VisibleItemFilter(), ItemFilter(Healthpack));
+        pickHealthPack.addPrecondition(HealerStatuses.HPACK_EXISTS);
+        pickHealthPack.addEffect(HealerStatuses.HAS_HPACK);
+        pickHealthPack.cost = 5;
+        this.addState(HealerActions.PICKUP_HPACK, pickHealthPack);
+
+        // State 2
+        let healAlly = new UseHealthpack(this, this.owner);
+        healAlly.targets = scene.getBattlers();
+        healAlly.targetFinder = new BasicFinder<Battler>(ClosestPositioned(this.owner), BattlerActiveFilter(), BattlerGroupFilter([this.owner.battleGroup]));
+        healAlly.addPrecondition(HealerStatuses.ALLY_EXISTS);
+        healAlly.addPrecondition(HealerStatuses.HAS_HPACK);
+        healAlly.cost = 1;
+        this.addState(HealerActions.USE_HPACK, healAlly);
+
+        // Idle action ... State 3
+        let idle = new Idle(this, this.owner);
+        idle.addEffect(HealerStatuses.GOAL);
+        idle.cost = 100;
+        this.addState(HealerActions.IDLE, idle);
+    }
 }
+
+
 
 // World states for the healer
 const HealerStatuses = {

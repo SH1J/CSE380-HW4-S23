@@ -436,7 +436,8 @@ export default class MainHW4Scene extends HW4Scene {
         navmesh.registerStrategy("astar", new AstarStrategy(navmesh));
 
         // TODO set the strategy to use A* pathfinding
-        navmesh.setStrategy("astar");
+        navmesh.setStrategy("direct");
+        //navmesh.setStrategy("astar"); // TypeError: Stack full
 
         // Add this navmesh to the navigation manager
         this.navManager.addNavigableEntity("navmesh", navmesh);

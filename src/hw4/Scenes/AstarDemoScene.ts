@@ -55,7 +55,7 @@ export default class AStarDemoScene extends Scene {
         this.destination = new Vec2(450, 25);
         
         // test destinations
-        this.destination = new Vec2(200, 200);
+        //this.destination = new Vec2(200, 200);
         //this.destination = new Vec2(20, 20);
         //this.destination = new Vec2(300, 200);
         //this.destination = new Vec2(300, 300);
