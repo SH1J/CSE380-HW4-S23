@@ -52,8 +52,14 @@ export default class AStarDemoScene extends Scene {
         this.npc = this.add.animatedSprite(NPCActor, "BlueEnemy", "primary")
         this.npc.addPhysics();
         this.npc.position.copy(new Vec2(25, 450));
-        //this.destination = new Vec2(450, 25);
+        this.destination = new Vec2(450, 25);
+        
+        // test destinations
         this.destination = new Vec2(200, 200);
+        //this.destination = new Vec2(20, 20);
+        //this.destination = new Vec2(300, 200);
+        //this.destination = new Vec2(300, 300);
+        //this.destination = new Vec2(60, 200);
 
         // The little blue rectangle in the top-right is where the NPC is trying to get to
         let destination = this.add.graphic(GraphicType.RECT, "primary", {position: this.destination, size: new Vec2(20, 20)})
@@ -67,6 +73,7 @@ export default class AStarDemoScene extends Scene {
     public updateScene(deltaT: number): void {
         // Move the npc along the path
         this.npc.moveOnPath(1, this.path);
+        this.npc.collisionShape.halfSize.scaleTo(0.25);
     }
     
     /**

@@ -63,66 +63,66 @@ export default class AstarStrategy extends NavPathStrat {
             console.log(mg.getNodePosition(edges.y));
             edges = edges.next;
         }
+        
+        console.log('\nStart', startPost);
+        console.log('End', endPost);
+        console.log("");
         */
-       console.log('\nStart', startPost);
-       console.log('End', endPost);
-       console.log("");
 
         let returnedClosedList = this.AstarIterator(mg, startPost, endPost);
 
         let stack = this.pathStack(startPost, endPost, returnedClosedList);
-        console.log("stack");
-        console.log(stack);
         return new NavigationPath(stack);
     }
 
     private AstarIterator(g: PositionGraph, start: number, end: number) {
         let openList = [{"node": start, "fCost": 0, "gCost": 0, "hCost": 0, "parent": start}]; // openList to iterate through
         let closeList = []; // iterated and saved.
-        let counter = 0
         
+        /*
         console.log("starting open");
         console.log(openList);
         console.log(openList.length);
         console.log("");
+        */
 
         while (openList.length > 0) {
-        //while (counter < 5) {
-            //
+            /*
             console.log("open");
             console.log(openList.length);
             for (let i = 0; i < openList.length; i++) {
                 console.log(openList[i]);
             }
-            //
+            */
 
             openList.sort(function(obj1, obj2) {
-                return obj1.fCost - obj2.fCost;
+                // || obj1.node - obj2.node
+                return obj1.fCost - obj2.fCost || obj1.hCost - obj2.hCost;
             });
 
-            //
+            /*
             console.log("open sorted");
             console.log(openList.length);
             for (let i = 0; i < openList.length; i++) {
                 console.log(openList[i]);
             }
-            //
+            */
 
             let currentNodeSet = openList.shift();
             let currentNode = currentNodeSet.node;
 
-            //
+            /*
             console.log("current node")
             console.log(currentNodeSet);
             console.log(currentNode);
             console.log("close");
             console.log(closeList.length);
-            //
 
             for (let i = 0; i < closeList.length; i++) {
                 console.log(closeList[i]);
             }
-            console.log(""); //
+            console.log("");
+            */
 
             if (currentNode == end) {
                 console.log("Path found");
@@ -132,66 +132,105 @@ export default class AstarStrategy extends NavPathStrat {
             
             let adjacentList = this.getAdjacents(currentNode);
             for (let i = 0; i < adjacentList.length; i++) {
-                if ((openList.findIndex(x => x.node === adjacentList[i]) == -1) && (closeList.findIndex(x => x.node === adjacentList[i]) == -1)) {
-                    let newNodeSet = this.getHeuristic(adjacentList[i], end, currentNodeSet)[0];
+                if (closeList.findIndex(x => x.node === adjacentList[i]) > -1) {continue;}
+                let newNodeSet = this.getHeuristic(adjacentList[i], end, currentNodeSet)[0];
+
+                if ((openList.findIndex(x => x.node === adjacentList[i]) > -1)) {
+                    let oldNode = openList.find(x => x.node === adjacentList[i]);
+                    let gCostOld = oldNode.gCost;
+                    if (gCostOld > newNodeSet.gCost) {
+                        newNodeSet.parent = currentNode;
+                        openList[openList.findIndex(x => x.node === adjacentList[i])] = newNodeSet;
+                    }
+                }
+                else if ((openList.findIndex(x => x.node === adjacentList[i]) == -1)) {
                     newNodeSet.parent = currentNode;
                     openList.push(newNodeSet);
                 }
             }
-
             closeList.push(currentNodeSet);
-            counter++;
         }
-
+        console.log("Path not Found");
         return [];
     }
 
-    private getHeuristic(current: number, goal: number, parent) {
+    private getHeuristic(nodeID: number, goal: number, parentNode) {
         let mg = this.mesh.graph;
         
-        let startPosition = mg.getNodePosition(current);
+        let nodePosition = mg.getNodePosition(nodeID);
+        let parentPosition = mg.getNodePosition(parentNode.node);
         let endPosition = mg.getNodePosition(goal);
 
-        let xDist = Math.abs(endPosition.x - startPosition.x);
-        let yDist = Math.abs(endPosition.y - startPosition.y);
+        let xDistEnd = Math.abs(endPosition.x - nodePosition.x);
+        let yDistEnd = Math.abs(endPosition.y - nodePosition.y);
 
-        let hCost;
-        if (xDist > yDist) {
-            hCost = (14*yDist) + (10*(xDist - yDist));
-        }
-        else {
-            hCost = (14*xDist) + (10*(yDist - xDist));
+        // gCost
+        let gCost = Number(parentNode.gCost) + 1;
+
+        // hCost
+        let hCost = xDistEnd + yDistEnd;
+
+        let edgeNum = 1;
+        let edges = mg.getEdges(nodeID);
+        while (edges.next != null) {
+            edges = edges.next;
+            edgeNum++;
         }
 
-        let gCost = Number(parent.gCost) + 1;
+        if (edgeNum < 2) {
+            hCost += 10;
+        }
+        else if (edgeNum < 3) {
+            hCost += 5;
+        }
+
         let fCost = gCost + hCost;
 
-        return [{ "node": current, "fCost": fCost, "gCost": gCost, "hCost": hCost, "parent": -1 }];
+        return [{ "node": nodeID, "fCost": fCost, "gCost": gCost, "hCost": hCost, "parent": -1}];
+    }
+
+    private updateHeuristic(currentNode, goal: number, parentNode) {
+        let node = currentNode.node;
+        let fCost = currentNode.fCost;
+        let hCost = currentNode.hCost;
+        let parent = parentNode.parent;
+        
+        let gCost = parent.gCost + 1;
+
+        return [{ "node": node, "fCost": fCost, "gCost": gCost, "hCost": hCost, "parent": parent}];
     }
 
     private getAdjacents(node: number) {
         let adjacents = [];
         let edges = this.mesh.graph.getEdges(node);
-        console.log(edges);
+        //console.log(edges);
 
-        adjacents.push(edges.y);
-        while (edges.next != null) {
-            edges = edges.next;
-            adjacents.push(edges.y);
+        if (edges != undefined) {
+            while (edges.next != null) {
+                edges = edges.next;
+                adjacents.push(edges.y);
+            }
         }
+        
         return adjacents
     }
 
     private pathStack(start: number, end: number, pathArray) {
-        let stackPath = new Stack<Vec2>();
+        let stackPath = new Stack<Vec2>(pathArray.length);
         let mg = this.mesh.graph;
         let pathFound = false;
         
         let pathNode = pathArray.find(x => x.node === end);
+
+        if (pathArray == 0) {
+            return stackPath;
+        }
+
         stackPath.push(mg.getNodePosition(pathNode.node));
         let pathParent = pathNode.parent;
 
-        while (!pathFound) {
+
+        while (!pathFound) { 
             pathNode = pathArray.find(x => x.node === pathParent);
             stackPath.push(mg.getNodePosition(pathNode.node));
             pathParent = pathNode.parent;
